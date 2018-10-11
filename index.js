@@ -19,6 +19,7 @@ const typeDefs = gql`
     books: [Book]
   }
 
+
   # В квери описано какой резолвер для какого типа нужно дернуть
   # По своей сути это тип верхнего уровня с которого начинается схема
   # Например, authors: [Author] значит что для получения данных типа *Author*
@@ -28,6 +29,7 @@ const typeDefs = gql`
     rates: [Rate],
     books: [Book],
     authors: [Author],
+    getAuthorBooks(name: String!): Author,
   }
 
 
@@ -39,6 +41,9 @@ const resolvers = {
       rates: () => bankAPI.rates,
       books: () => libraryAPI.books,
       authors: () => libraryAPI.authors,
+      getAuthorBooks(root, { name }) {
+        return libraryAPI.authors.find(author => author.name === name);
+      }
   },
   Author: {
     books(author) {
