@@ -2,38 +2,55 @@ const { ApolloServer, gql } = require('apollo-server');
 const { libraryAPI, bankAPI } = require('./mocks');
 
 const typeDefs = gql`
-  type Book {
-    title: String
-    author: String
-  }
 
   type Rate {
     currency: String
     value: Float
   }
 
-  type Query {
-    books: [Book],
-    rates: [Rate]
+  type Book {
+    title: String
+    author: Author
+    year: Int
   }
+
+  type Author {
+    name: String
+    books: [Book]
+  }
+
+  # В квери описано какой резолвер для какого типа нужно дернуть
+  # По своей сути это тип верхнего уровня с которого начинается схема
+  # Например, authors: [Author] значит что для получения данных типа *Author*
+  # надо дернуть резолвер *authors* (resolvers.Query.authors)
+
+  type Query {
+    rates: [Rate],
+    books: [Book],
+    authors: [Author],
+  }
+
+
 `;
 
-// Resolvers define the technique for fetching the types in the
-// schema. We'll retrieve books from the "books" array above.
+
 const resolvers = {
   Query: {
-    books: () => libraryAPI.books,
-    rates: () => bankAPI.rates
+      rates: () => bankAPI.rates,
+      books: () => libraryAPI.books,
+      authors: () => libraryAPI.authors,
+  },
+  Author: {
+    books(author) {
+      // console.log('author', JSON.stringify(author, null, 2))
+      return libraryAPI.books.filter(book => book.author === author.name);
+    },
   },
 };
 
-// In the most basic sense, the ApolloServer can be started
-// by passing type definitions (typeDefs) and the resolvers
-// responsible for fetching the data for those types.
+
 const server = new ApolloServer({ typeDefs, resolvers });
 
-// This `listen` method launches a web-server. Existing apps
-// can utilize middleware options, which we'll discuss later.
 server.listen().then(({ url }) => {
   console.log(`🚀  Server ready at ${url}`);
 });
